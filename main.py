@@ -24,19 +24,34 @@ ENTRY = (
 
 OUTPUT_PATH = "/output/entry.txt"
 
+MAX_CHARS = 140
 
-def main():
-    text = ENTRY
-    if not 1 <= len(text) <= 140:
+
+def _validate(text):
+    """Guard the gate before anything is written: 1-140 chars, one line."""
+    if not 1 <= len(text) <= MAX_CHARS:
         raise ValueError(
-            "entry must be 1 to 140 characters, got %d" % len(text)
+            "entry must be 1 to %d characters, got %d" % (MAX_CHARS, len(text))
         )
     if not text.strip():
         raise ValueError("entry must not be only whitespace")
+    if "\n" in text or "\r" in text:
+        raise ValueError("entry must be a single line")
+    if text != text.strip():
+        raise ValueError("entry must not have leading or trailing whitespace")
+
+
+def main():
+    text = ENTRY
+    _validate(text)
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as handle:
         handle.write(text)
     os.chmod(OUTPUT_PATH, 0o644)
+    with open(OUTPUT_PATH, "r", encoding="utf-8") as handle:
+        written = handle.read()
+    if written != text:
+        raise ValueError("written entry does not match the entry text")
 
 
 if __name__ == "__main__":
